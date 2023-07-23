@@ -8,6 +8,7 @@ from random import randrange
 from pprint import pprint
 from config import user_token, group_token
 
+
 class Vk:
     def __init__(self):
         self.token = group_token
@@ -49,8 +50,8 @@ class Vk:
                 sex = 'ж'
             bdate = item['bdate'].split('.')
             if len(bdate) == 3:
-               date_now = datetime.date.today()
-               age = date_now.year - int(bdate[2]) - ((date_now.month, date_now.day) < (int(bdate[1]), int(bdate[0])))
+                date_now = datetime.date.today()
+                age = date_now.year - int(bdate[2]) - ((date_now.month, date_now.day) < (int(bdate[1]), int(bdate[0])))
             else:
                 bdate = None
                 age = None
@@ -61,7 +62,6 @@ class Vk:
                           )
 
             return first_name, last_name, city, sex, age, link
-    
 
     def get_photo_user(self, user_id):
         url = 'https://api.vk.com/method/photos.getAll'
@@ -83,10 +83,11 @@ class Vk:
         sorted_photos = {}
         for i in photos_sort_key:
             sorted_photos[i] = photos[i]
-        
+
         dict_id_photos = []
         for photo_id in sorted_photos.keys():
             dict_id_photos.append(photo_id)
         return dict_id_photos[:3]
+
+
 vk = Vk()
-print(vk.get_info_user('522161386'))
