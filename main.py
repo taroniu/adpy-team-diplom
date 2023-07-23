@@ -35,18 +35,19 @@ group_session = vk_api.VkApi(token=group_token)
 group_bot = group_session.get_api()
 longpoll = VkLongPoll(group_session)
 
+
 def user_send_message(user_id, message):
     session.method('messages.send', {
         'user_id': user_id,
         'message': message,
         'random_id': 0
     })
-
 def group_send_message(user_id, message, keyboard=None):
     post = {
         'user_id': user_id,
         'message': message,
         'random_id': 0,
+        # 'attachment': None
     }
     if keyboard != None:
         post['keyboard'] = keyboard.get_keyboard()
@@ -54,9 +55,23 @@ def group_send_message(user_id, message, keyboard=None):
         post = post
     group_session.method('messages.send', post)
 
+def send_photo(user_id, message, attachments):
+    """method for sending photos"""
+    try:
+        group_bot.messages.send(
+            user_id=user_id,
+            message=message,
+            random_id=randrange(10 ** 7),
+            attachment=attachments
+            # attachment=",".join(attachments)
+        )
+    except TypeError:
+        pass
+
 def get_user_info(user_id):
     info = session.method('users.get', {'user_ids': user_id})
     return f"{info[0]['first_name']} {info[0]['last_name']}"
+
 
 def get_hometown():
     for event in longpoll.listen():
@@ -88,26 +103,57 @@ def birth_year():
                     birth_year = 2023 - age
                     group_send_message(user_id, f'age is {age}')
                     group_send_message(user_id, f'birth year is {birth_year}')
-                    group_send_message(user_id, 'Начинаем поиск')
+                    group_send_message((user_id, 'Начинаем поиск'))
                 except:
                     group_send_message(user_id, f'input number')
+                print(request)
                 return birth_year
+                # year_of_birth = 2023 - int(age)
 
 def searching_users():
     fields = ['can_write_private_message, city, sex, can_see_all_posts, birth_year']
+    city = 'Омск'
     sex = get_sex()
+    status = 6
+    # birth_year = birth_year()
     count = 50
     users = session.method('users.search', { 'hometown': get_hometown(), 'sex': sex, 'birth_year': birth_year(), 'count': count, 'fields': fields})
+    # print(users)
+    users_ids = []
     for i in users['items']:
         if i['can_see_all_posts'] == 1 and i['can_access_closed'] == True and i['can_write_private_message'] == 1:
             us_id = i['id']
-            photos = session.method('photos.get', {'owner_id': i['id'], 'album_id': 'profile', 'extended': 1, 'photo_sizes': 0})
+            # print(i)
+            photos = session.method('photos.get', {'owner_id': i['id'], 'album_id': 'profile', 'extended': 1, 'photo_sizes': 1})
             name = i['first_name']
             last_name = i['last_name']
+            sex = i['sex']
+            # city = i['city']['id']
+            # city_name = i['city']
             i['link'] = f'https://vk.com/id{us_id}'
-            group_send_message(522161386, f'{name} {last_name} \n {i["link"]}')
-            print(f'{name} {last_name} \n {i["link"]}')
-            pprint(f"    {photos['items'][0]['sizes']}")
+            info = session.method('users.get')
+            user_id = info[0]['id']
+            # group_send_message(user_id, f'{name} {last_name} \n {i["link"]}')
+            pprint(f'{name} {last_name} \\n {i["link"]}')
+            #находим самые популярные фото профиля и удаляем остальные.
+            photos_items_list = photos['items']
+            newlist = sorted(photos_items_list, key=lambda d: d['likes']['count'])
+            while len(newlist) > 3:
+                newlist.pop()
+            # извлекаем список со ссылками на фото и оставляем только самый большой размер.
+            sizes_list = []
+            max_size_link = []
+            for j in newlist:
+                sizes_list += j['sizes']
+            for j in sizes_list:
+                if j['type'] == 'z':
+                 max_size_link.append(j['url'])
+            pprint(newlist)
+            pprint(max_size_link)
+            # attachment = ",".join(attachments)
+            group_send_message(user_id, f'{name} {last_name} \n {i["link"]}')
+            send_photo(user_id, 'message', max_size_link)
+
 
 def work():
     for event in longpoll.listen():
@@ -119,6 +165,7 @@ def work():
                 group_send_message(user_id, f'''Здарова, {get_user_info(user_id)}! 
                 Этот бот поможет тебе найти девушку или парня из твоего города или из другого города.
                 Для начала нажми "Искать".''')
+                # if request == 'искать':
 
                 keyboard = VkKeyboard()
                 keyboard.add_location_button()
@@ -131,6 +178,7 @@ def work():
                     keyboard.add_button(btn, btn_color)
 
                 if request == 'искать':
+
 
                     group_send_message(user_id, 'Ты нажал кнопку "Искать" ', keyboard)
                     group_send_message(user_id, 'Сначала укажите город')
