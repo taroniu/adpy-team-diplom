@@ -105,7 +105,7 @@ def searching_users():
             name = i['first_name']
             last_name = i['last_name']
             i['link'] = f'https://vk.com/id{us_id}'
-            group_send_message(522161386, f'{name} {last_name} \n {i["link"]}')
+            group_send_message(522161386, f'{name} {last_name} \n {i["link"]}') # Сюда вставляется свой user_id цифрами.
             print(f'{name} {last_name} \n {i["link"]}')
             pprint(f"    {photos['items'][0]['sizes']}")
 
